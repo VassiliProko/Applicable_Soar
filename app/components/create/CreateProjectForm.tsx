@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import {
   Calendar,
-  Clock,
   MapPin,
   DollarSign,
   Users,
@@ -13,8 +12,9 @@ import {
   X,
   AlignLeft,
 } from "lucide-react";
+import { Popover } from "@mantine/core";
+import { DatePicker } from "@mantine/dates";
 import { ProjectFormData, INITIAL_PROJECT } from "@/app/lib/types";
-import BannerPicker from "./BannerPicker";
 
 /* ── Shared field wrapper ────────────────────────────── */
 
@@ -182,6 +182,8 @@ function Section({
 
 export default function CreateProjectForm() {
   const [form, setForm] = useState<ProjectFormData>(INITIAL_PROJECT);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<[string | null, string | null]>([null, null]);
 
   const update = useCallback(
     <K extends keyof ProjectFormData>(key: K, value: ProjectFormData[K]) => {
@@ -195,16 +197,6 @@ export default function CreateProjectForm() {
       className="flex flex-col gap-md"
       onSubmit={(e) => e.preventDefault()}
     >
-      {/* Banner */}
-      <BannerPicker
-        bannerType={form.bannerType}
-        bannerValue={form.bannerValue}
-        onBannerChange={(type, value) => {
-          update("bannerType", type);
-          update("bannerValue", value);
-        }}
-      />
-
       {/* Title */}
       <input
         type="text"
@@ -214,36 +206,53 @@ export default function CreateProjectForm() {
         className="type-headline bg-transparent border-none outline-none text-text-primary placeholder:text-text-tertiary w-full"
       />
 
-      {/* Date & Duration */}
-      <Section title="Schedule">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-sm">
-          <FieldGroup icon={Calendar} label="Start Date">
-            <input
-              type="date"
-              value={form.startDate}
-              onChange={(e) => update("startDate", e.target.value)}
-              className="h-[var(--input-height)] px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
-            />
-          </FieldGroup>
-          <FieldGroup icon={Calendar} label="End Date">
-            <input
-              type="date"
-              value={form.endDate}
-              onChange={(e) => update("endDate", e.target.value)}
-              className="h-[var(--input-height)] px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
-            />
-          </FieldGroup>
-          <FieldGroup icon={Clock} label="Duration">
-            <input
-              type="text"
-              value={form.duration}
-              onChange={(e) => update("duration", e.target.value)}
-              placeholder="e.g. 2 weeks"
-              className="h-[var(--input-height)] px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
-            />
-          </FieldGroup>
+      {/* Timeline */}
+      <div className="bg-surface-1 rounded-[var(--radius-md)] px-md py-2xs flex items-center gap-sm">
+        <h3 className="type-body font-semibold text-text-primary shrink-0">Project Timeline</h3>
+        <div className="flex items-center gap-2xs flex-1 min-w-0">
+          <input
+            type="text"
+            value={form.duration}
+            onChange={(e) => update("duration", e.target.value)}
+            placeholder="e.g. 2 weeks, March — April"
+            className="h-10 flex-1 px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
+          />
+          <Popover
+            opened={calendarOpen}
+            onChange={setCalendarOpen}
+            position="bottom-end"
+            shadow="md"
+          >
+            <Popover.Target>
+              <button
+                type="button"
+                onClick={() => setCalendarOpen((o) => !o)}
+                className="h-10 w-10 shrink-0 flex items-center justify-center rounded-[var(--radius-sm)] border border-border bg-background text-text-tertiary hover:text-text-primary hover:border-border-hover transition-all duration-[var(--duration-micro)] cursor-pointer"
+              >
+                <Calendar size={16} />
+              </button>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <DatePicker
+                type="range"
+                value={dateRange}
+                onChange={(val) => {
+                  setDateRange(val);
+                  if (val[0] && val[1]) {
+                    const fmt = (d: string) =>
+                      new Date(d).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    update("duration", `${fmt(val[0])} — ${fmt(val[1])}`);
+                    setCalendarOpen(false);
+                  }
+                }}
+              />
+            </Popover.Dropdown>
+          </Popover>
         </div>
-      </Section>
+      </div>
 
       {/* Location */}
       <Section title="Location">

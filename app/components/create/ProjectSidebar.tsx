@@ -1,43 +1,107 @@
 "use client";
 
-import { Palette, Save, Send } from "lucide-react";
+import { useRef, useCallback } from "react";
+import { ImagePlus, Check, Save, Send } from "lucide-react";
 import Button from "@/app/components/ui/Button";
 
-const THEME_COLORS = [
-  { label: "Midnight", value: "#1B2838" },
-  { label: "Forest", value: "#2D4A3E" },
-  { label: "Plum", value: "#3B2D4A" },
-  { label: "Ember", value: "#4A2D2D" },
-  { label: "Ocean", value: "#2D3B4A" },
-  { label: "Sand", value: "#4A3B2D" },
-];
+const BANNER_COLORS = ["#1B2838", "#2D4A3E", "#3B2D4A"] as const;
 
-export default function ProjectSidebar() {
+interface ProjectSidebarProps {
+  bannerType: "color" | "image";
+  bannerValue: string;
+  onBannerChange: (type: "color" | "image", value: string) => void;
+}
+
+export default function ProjectSidebar({
+  bannerType,
+  bannerValue,
+  onBannerChange,
+}: ProjectSidebarProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        onBannerChange("image", ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    },
+    [onBannerChange]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files?.[0];
+      if (!file || !file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        onBannerChange("image", ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    },
+    [onBannerChange]
+  );
+
+  const bannerStyle =
+    bannerType === "image"
+      ? {
+          backgroundImage: `url(${bannerValue})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }
+      : { backgroundColor: bannerValue };
+
   return (
     <div className="flex flex-col gap-md sticky top-20">
-      {/* Theme options */}
-      <div className="bg-surface-1 rounded-[var(--radius-md)] p-md flex flex-col gap-sm">
-        <h3 className="type-caption font-semibold text-text-secondary flex items-center gap-2xs uppercase tracking-wider">
-          <Palette size={14} />
-          Page Theme
-        </h3>
-        <div className="grid grid-cols-3 gap-2xs">
-          {THEME_COLORS.map((theme) => (
-            <button
-              key={theme.value}
-              type="button"
-              className="flex flex-col items-center gap-1 p-2 rounded-[var(--radius-sm)] hover:bg-surface-2 transition-colors duration-[var(--duration-micro)] cursor-pointer"
-            >
-              <div
-                className="w-full aspect-[5/3] rounded-[var(--radius-xs)]"
-                style={{ backgroundColor: theme.value }}
-              />
-              <span className="type-caption text-text-tertiary">
-                {theme.label}
-              </span>
-            </button>
-          ))}
+      {/* Image upload — square */}
+      <div
+        className="w-full aspect-square rounded-[var(--radius-md)] overflow-hidden relative cursor-pointer group"
+        style={bannerStyle}
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-[var(--duration-base)] flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-base)] flex flex-col items-center gap-2 text-white">
+            <ImagePlus size={20} />
+            <span className="type-caption font-medium">Upload Image</span>
+          </div>
         </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Color presets */}
+      <div className="flex items-center gap-2xs">
+        {BANNER_COLORS.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className="flex-1 aspect-[2/1] rounded-[var(--radius-sm)] border-2 transition-all duration-[var(--duration-micro)] cursor-pointer flex items-center justify-center"
+            style={{
+              backgroundColor: color,
+              borderColor:
+                bannerType === "color" && bannerValue === color
+                  ? "var(--primary)"
+                  : "transparent",
+            }}
+            onClick={() => onBannerChange("color", color)}
+          >
+            {bannerType === "color" && bannerValue === color && (
+              <Check size={14} className="text-white" />
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Actions */}
@@ -51,11 +115,6 @@ export default function ProjectSidebar() {
           Save as Draft
         </Button>
       </div>
-
-      {/* Status hint */}
-      <p className="type-caption text-text-tertiary text-center">
-        Your project will be reviewed before going live.
-      </p>
     </div>
   );
 }
