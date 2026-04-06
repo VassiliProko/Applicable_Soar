@@ -10,7 +10,7 @@ export default function CreatePageContent() {
   const [bannerValue, setBannerValue] = useState<string>(BANNER_COLORS[0]);
 
   return (
-    <div className="flex gap-xl flex-col lg:flex-row">
+    <div className="flex gap-xl flex-col lg:flex-row max-w-[66vw] mx-auto">
       {/* Sidebar — left */}
       <div className="w-full lg:w-56 shrink-0 order-2 lg:order-1">
         <ProjectSidebar
@@ -24,7 +24,7 @@ export default function CreatePageContent() {
       </div>
 
       {/* Main form — right */}
-      <div className="flex-1 min-w-0 order-1 lg:order-2">
+      <div className="flex-1 min-w-0 order-1 lg:order-2 w-full">
         <CreateProjectForm />
       </div>
     </div>
