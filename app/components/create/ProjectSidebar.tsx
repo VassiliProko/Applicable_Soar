@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Paperclip, X, Save, Send, Globe, Lock, ChevronDown, Check, FileText } from "lucide-react";
+import { Paperclip, X, Save, Send, Globe, Lock, ChevronDown, Check, FileText, Loader2 } from "lucide-react";
 import Button from "@/app/components/ui/Button";
 
 type Visibility = "public" | "private";
@@ -34,7 +34,7 @@ const ACCEPTED_TYPES = ACCEPTED_EXTENSIONS.map((ext) => {
   return `image/${ext.slice(1)}`;
 }).join(",");
 
-interface Attachment {
+interface AttachmentPreview {
   name: string;
   url: string;
   type: string;
@@ -46,29 +46,61 @@ function isValidFile(file: File) {
   return ACCEPTED_EXTENSIONS.includes(ext);
 }
 
-export default function ProjectSidebar() {
+const MAX_FILES = 4;
+
+interface ProjectSidebarProps {
+  visibility: Visibility;
+  onVisibilityChange: (v: Visibility) => void;
+  attachmentFiles: File[];
+  onFilesAdd: (files: File[]) => void;
+  onFileRemove: (index: number) => void;
+  onPublish: () => void;
+  onSave: () => void;
+  saving: boolean;
+  isEdit?: boolean;
+  status?: "draft" | "published";
+  onStatusChange?: (s: "draft" | "published") => void;
+}
+
+export default function ProjectSidebar({
+  visibility,
+  onVisibilityChange,
+  attachmentFiles,
+  onFilesAdd,
+  onFileRemove,
+  onPublish,
+  onSave,
+  saving,
+  isEdit,
+  status,
+  onStatusChange,
+}: ProjectSidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [visibility, setVisibility] = useState<Visibility>("public");
   const [visibilityOpen, setVisibilityOpen] = useState(false);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
-  const addFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
-    Array.from(files)
-      .filter(isValidFile)
-      .forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          setAttachments((prev) => [
-            ...prev,
-            { name: file.name, url: ev.target?.result as string, type: file.type },
-          ]);
-        };
-        reader.readAsDataURL(file);
-      });
-  }, []);
+  // Build preview objects from File objects
+  const attachments: AttachmentPreview[] = useMemo(
+    () =>
+      attachmentFiles.map((f) => ({
+        name: f.name,
+        url: URL.createObjectURL(f),
+        type: f.type,
+      })),
+    [attachmentFiles]
+  );
+
+  const addFiles = useCallback(
+    (fileList: FileList | null) => {
+      if (!fileList) return;
+      const remaining = MAX_FILES - attachmentFiles.length;
+      if (remaining <= 0) return;
+      const valid = Array.from(fileList).filter(isValidFile).slice(0, remaining);
+      if (valid.length > 0) onFilesAdd(valid);
+    },
+    [attachmentFiles.length, onFilesAdd]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -79,10 +111,6 @@ export default function ProjectSidebar() {
     [addFiles]
   );
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="flex flex-col gap-md sticky top-20">
       {/* Attachments title */}
@@ -91,28 +119,38 @@ export default function ProjectSidebar() {
         <span className="type-body font-medium text-text-primary">Attachments</span>
       </div>
 
-      {/* Drop zone — always square */}
+      {/* Drop zone */}
       <div
         className={`w-full aspect-[4/3] rounded-[var(--radius-md)] border-2 border-dashed overflow-hidden transition-colors duration-[var(--duration-base)] flex flex-col items-center justify-center gap-3 -mt-xs ${
-          dragging
-            ? "border-primary bg-primary-tint"
-            : "border-border hover:border-border-hover bg-surface-1"
+          attachments.length >= MAX_FILES
+            ? "border-border bg-surface-1"
+            : dragging
+              ? "border-primary bg-primary-tint"
+              : "border-border hover:border-border-hover bg-surface-1"
         }`}
         onDragOver={(e) => {
           e.preventDefault();
-          setDragging(true);
+          if (attachments.length < MAX_FILES) setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
       >
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="px-4 py-1.5 rounded-[var(--radius-sm)] bg-white border border-border text-text-primary type-body font-medium hover:border-border-hover transition-colors duration-[var(--duration-micro)] cursor-pointer"
-        >
-          Choose Files
-        </button>
-        <span className="type-caption text-text-tertiary">or drag files here</span>
+        {attachments.length >= MAX_FILES ? (
+          <span className="type-caption text-text-tertiary text-center px-4">
+            Maximum of {MAX_FILES} files per project
+          </span>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-1.5 rounded-[var(--radius-sm)] bg-white border border-border text-text-primary type-body font-medium hover:border-border-hover transition-colors duration-[var(--duration-micro)] cursor-pointer"
+            >
+              Choose Files
+            </button>
+            <span className="type-caption text-text-tertiary">or drag files here</span>
+          </>
+        )}
       </div>
 
       {/* File list */}
@@ -146,7 +184,7 @@ export default function ProjectSidebar() {
                 role="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeAttachment(i);
+                  onFileRemove(i);
                 }}
                 className="opacity-0 group-hover/row:opacity-100 transition-opacity text-text-tertiary hover:text-text-primary shrink-0 cursor-pointer"
               >
@@ -170,16 +208,49 @@ export default function ProjectSidebar() {
       />
 
       {/* Actions */}
-      <div className="flex flex-col gap-sm">
-        <Button variant="primary" size="md" className="w-full">
-          <Send size={16} />
-          Publish Project
-        </Button>
-        <Button variant="secondary" size="md" className="w-full">
-          <Save size={16} />
-          Save as Draft
-        </Button>
-      </div>
+      {isEdit ? (
+        <div className="flex flex-col gap-sm">
+          <div className="flex items-center justify-between">
+            <span className="type-body font-medium text-text-primary">Status</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onStatusChange?.(status === "published" ? "draft" : "published")}
+            className="w-full flex items-center justify-between px-sm py-xs rounded-[var(--radius-md)] border border-border-divider bg-surface hover:bg-surface-dark/5 transition-colors duration-[var(--duration-micro)] cursor-pointer"
+          >
+            <span className="flex items-center gap-2xs">
+              {status === "published" ? <Send size={16} className="text-[#15803d]" /> : <Save size={16} className="text-text-tertiary" />}
+              <span className="type-body font-medium">
+                {status === "published" ? "Published" : "Draft"}
+              </span>
+            </span>
+            <span
+              className={`
+                relative w-9 h-5 rounded-full transition-colors duration-[var(--duration-base)]
+                ${status === "published" ? "bg-[#15803d]" : "bg-border"}
+              `}
+            >
+              <span
+                className={`
+                  absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-[var(--duration-base)]
+                  ${status === "published" ? "translate-x-[18px]" : "translate-x-0.5"}
+                `}
+              />
+            </span>
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-sm">
+          <Button variant="primary" size="md" className="w-full" onClick={onPublish} disabled={saving}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            Publish Project
+          </Button>
+          <Button variant="secondary" size="md" className="w-full text-text-tertiary" onClick={onSave} disabled={saving}>
+            <Save size={16} />
+            Save as Draft
+          </Button>
+        </div>
+      )}
 
       {/* Visibility dropdown */}
       <div className="relative">
@@ -216,7 +287,7 @@ export default function ProjectSidebar() {
                     type="button"
                     className={`w-full text-left px-sm py-xs flex items-start gap-2xs cursor-pointer hover:bg-surface-dark/5 transition-colors duration-[var(--duration-micro)] ${selected ? "bg-surface-dark/5" : ""}`}
                     onClick={() => {
-                      setVisibility(option.value);
+                      onVisibilityChange(option.value);
                       setVisibilityOpen(false);
                     }}
                   >

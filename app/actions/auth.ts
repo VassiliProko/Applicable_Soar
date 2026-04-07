@@ -4,36 +4,39 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function signUp(formData: FormData) {
+export async function sendOtp(email: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+    },
+  });
 
   if (error) {
     return { error: error.message };
   }
 
-  redirect("/");
+  return { success: true };
 }
 
-export async function signIn(formData: FormData) {
+export async function verifyOtp(email: string, token: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
 
   if (error) {
     return { error: error.message };
   }
 
-  redirect("/");
+  return { success: true };
 }
 
 export async function signOut() {
@@ -41,7 +44,7 @@ export async function signOut() {
   const supabase = createClient(cookieStore);
 
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/");
 }
 
 export async function getUser() {

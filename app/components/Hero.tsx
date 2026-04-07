@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import Button from "./ui/Button";
 
 export default function Hero() {
@@ -23,8 +24,17 @@ export default function Hero() {
       </p>
 
       <Link href="/create">
-        <Button variant="primary" size="md">
-          Create Your First Project
+        <Button variant="primary" size="md" className="group">
+          Create Project
+          <ArrowRight
+            size={16}
+            className="
+              -ml-1 w-0 opacity-0
+              group-hover:w-4 group-hover:opacity-100 group-hover:ml-0
+              transition-all duration-[var(--duration-base)]
+              [transition-timing-function:var(--ease-enter)]
+            "
+          />
         </Button>
       </Link>
     </section>

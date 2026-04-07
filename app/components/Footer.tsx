@@ -48,10 +48,10 @@ export default function Footer() {
                 Pricing
               </Link>
               <Link
-                href="/help"
+                href="/about"
                 className="text-white/80 hover:text-white transition-colors duration-[var(--duration-micro)]"
               >
-                Help
+                About
               </Link>
             </nav>
           </div>

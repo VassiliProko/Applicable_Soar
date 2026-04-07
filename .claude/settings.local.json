@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx next:*)",
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(npx tsc:*)",
+      "Read(//Users/vassi/Documents/Projects/Operation\\\\ SOAR/Applicable_Soar/utils/supabase/**)",
+      "Read(//Users/vassi/Documents/Projects/Operation\\\\ SOAR/Applicable_Soar/app/lib/**)",
+      "Read(//Users/vassi/Documents/Projects/Operation\\\\ SOAR/Applicable_Soar/app/**)",
+      "Read(//Users/vassi/Documents/Projects/Operation\\\\ SOAR/Applicable_Soar/app/components/**)",
+      "Read(//Users/vassi/Documents/Projects/Operation\\\\ SOAR/Applicable_Soar/app/discover/**)"
+    ]
+  }
+}

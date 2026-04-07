@@ -7,11 +7,11 @@
 
 :root {
   /* -- Colors: Primary -- */
-  --primary: #0EA0C1;
-  --primary-hover: #2FB3D1;
-  --primary-active: #0B8BA8;
-  --primary-tint: rgba(14, 160, 193, 0.12);
-  --primary-focus-ring: rgba(14, 160, 193, 0.24);
+  --primary: #7BE8B4;
+  --primary-hover: #95EDC5;
+  --primary-active: #62D9A0;
+  --primary-tint: rgba(123, 232, 180, 0.12);
+  --primary-focus-ring: rgba(123, 232, 180, 0.24);
 
   /* -- Colors: Background & Surfaces -- */
   --background: #ffffff;
@@ -349,6 +349,47 @@ select:focus-visible {
 
 .datepicker-dark .mantine-DatePicker-pickerControl:hover {
   background: var(--surface-2);
+}
+
+/* ============================================================
+   Motion: Reduced Motion
+   ============================================================ */
+
+/* ============================================================
+   Modal Animation
+   ============================================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* ============================================================

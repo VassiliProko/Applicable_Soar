@@ -8,27 +8,33 @@ interface BannerPickerProps {
   bannerType: "color" | "image";
   bannerValue: string;
   onBannerChange: (type: "color" | "image", value: string) => void;
+  onFileChange?: (file: File | null) => void;
 }
 
 export default function BannerPicker({
   bannerType,
   bannerValue,
   onBannerChange,
+  onFileChange,
 }: BannerPickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback(
+    (file: File) => {
+      const previewUrl = URL.createObjectURL(file);
+      onBannerChange("image", previewUrl);
+      onFileChange?.(file);
+    },
+    [onBannerChange, onFileChange]
+  );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const result = ev.target?.result as string;
-        onBannerChange("image", result);
-      };
-      reader.readAsDataURL(file);
+      handleFile(file);
     },
-    [onBannerChange]
+    [handleFile]
   );
 
   const handleDrop = useCallback(
@@ -36,14 +42,9 @@ export default function BannerPicker({
       e.preventDefault();
       const file = e.dataTransfer.files?.[0];
       if (!file || !file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const result = ev.target?.result as string;
-        onBannerChange("image", result);
-      };
-      reader.readAsDataURL(file);
+      handleFile(file);
     },
-    [onBannerChange]
+    [handleFile]
   );
 
   const bannerStyle =

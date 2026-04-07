@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { MantineProvider } from "@mantine/core";
+import Navbar from "./components/Navbar";
+import LayoutFooter from "./components/LayoutFooter";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "./globals.css";
@@ -35,7 +37,11 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <MantineProvider>{children}</MantineProvider>
+        <MantineProvider>
+          <Navbar />
+          {children}
+          <LayoutFooter />
+        </MantineProvider>
       </body>
     </html>
   );

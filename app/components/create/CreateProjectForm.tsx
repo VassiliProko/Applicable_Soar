@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Calendar,
   CalendarRange,
@@ -13,11 +13,13 @@ import {
   Globe,
   Building2,
   ArrowLeftRight,
+  Crown,
 } from "lucide-react";
 import { Popover } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
 import type { MantineTransition } from "@mantine/core";
-import { ProjectFormData, INITIAL_PROJECT } from "@/app/lib/types";
+import type { ProjectFormData } from "@/app/lib/types";
+import { PROJECT_TYPE_OPTIONS } from "@/app/lib/types";
 
 /* ── Dropdown transition (drop down from top) ──────── */
 
@@ -54,9 +56,9 @@ function LocationPicker({
   onDetailChange,
 }: {
   locationType: "remote" | "on-site" | "hybrid";
-  locationDetail: string;
+  locationDetail: string[];
   onTypeChange: (v: "remote" | "on-site" | "hybrid") => void;
-  onDetailChange: (v: string) => void;
+  onDetailChange: (v: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -65,7 +67,7 @@ function LocationPicker({
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hasLocation = touched || locationDetail || locationType !== "remote";
+  const hasLocation = touched || locationDetail.length > 0 || locationType !== "remote";
 
   // Fetch address suggestions from Nominatim (debounced)
   useEffect(() => {
@@ -102,23 +104,27 @@ function LocationPicker({
     setTouched(true);
     onTypeChange(preset.value);
     if (preset.value === "remote") {
-      onDetailChange("");
+      onDetailChange([]);
       setOpen(false);
     }
   };
 
-  const selectAddress = (address: string) => {
-    onDetailChange(address);
+  const addAddress = (address: string) => {
+    if (locationDetail.includes(address)) return;
+    onDetailChange([...locationDetail, address]);
     if (locationType === "remote") onTypeChange("on-site");
     setTouched(true);
     setSearch("");
     setSuggestions([]);
-    setOpen(false);
+  };
+
+  const removeAddress = (index: number) => {
+    onDetailChange(locationDetail.filter((_, i) => i !== index));
   };
 
   const submitCustomLocation = () => {
     const trimmed = search.trim();
-    if (trimmed) selectAddress(trimmed);
+    if (trimmed) addAddress(trimmed);
   };
 
   return (
@@ -133,7 +139,11 @@ function LocationPicker({
           {hasLocation ? (
             <>
               <span className="type-body text-text-secondary truncate min-w-0">
-                {locationDetail || "No address"}
+                {locationDetail.length > 0
+                  ? locationDetail.length === 1
+                    ? locationDetail[0]
+                    : `${locationDetail.length} locations`
+                  : "No address"}
               </span>
               <span className="flex-1" />
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-surface-2 type-body font-medium text-text-primary shrink-0">
@@ -217,7 +227,7 @@ function LocationPicker({
                   <button
                     key={s.place_id}
                     type="button"
-                    onClick={() => selectAddress(s.display_name)}
+                    onClick={() => addAddress(s.display_name)}
                     className="flex items-start gap-sm px-3 py-2 rounded-[var(--radius-sm)] type-caption text-text-secondary hover:bg-surface-2 hover:text-text-primary cursor-pointer text-left transition-colors duration-[var(--duration-micro)]"
                   >
                     <MapPin size={14} className="text-text-tertiary shrink-0 mt-0.5" />
@@ -227,20 +237,27 @@ function LocationPicker({
               </div>
             )}
 
-            {/* Current address */}
-            {locationDetail && (
-              <div className="px-3 pb-2 border-t border-border pt-2 mx-1.5 mb-1">
-                <div className="flex items-center gap-2xs type-caption text-text-secondary">
-                  <MapPin size={12} className="shrink-0" />
-                  <span className="truncate text-text-primary">{locationDetail}</span>
-                  <button
-                    type="button"
-                    onClick={() => onDetailChange("")}
-                    className="ml-auto text-text-tertiary hover:text-text-primary cursor-pointer shrink-0"
+            {/* Current addresses */}
+            {locationDetail.length > 0 && (
+              <div className="mx-1.5 mb-1.5 rounded-[var(--radius-sm)] bg-surface-2 overflow-hidden">
+                {locationDetail.map((addr, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-sm px-3 py-2.5 type-body text-text-primary ${
+                      i > 0 ? "border-t border-border" : ""
+                    }`}
                   >
-                    <X size={12} />
-                  </button>
-                </div>
+                    <MapPin size={14} className="text-text-tertiary shrink-0" />
+                    <span className="truncate flex-1 min-w-0">{addr}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAddress(i)}
+                      className="text-text-tertiary hover:text-text-primary cursor-pointer shrink-0"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -252,20 +269,25 @@ function LocationPicker({
 
 /* ── Main form ───────────────────────────────────────── */
 
-export default function CreateProjectForm() {
-  const [form, setForm] = useState<ProjectFormData>(INITIAL_PROJECT);
+interface CreateProjectFormProps {
+  form: ProjectFormData;
+  onUpdate: <K extends keyof ProjectFormData>(key: K, value: ProjectFormData[K]) => void;
+  fieldErrors?: Set<string>;
+  onFieldInteraction?: (field: string) => void;
+}
+
+export default function CreateProjectForm({
+  form,
+  onUpdate: update,
+  fieldErrors,
+  onFieldInteraction,
+}: CreateProjectFormProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<[string | null, string | null]>([null, null]);
   const [commitmentOpen, setCommitmentOpen] = useState(false);
   const [compEditing, setCompEditing] = useState(false);
   const compInputRef = useRef<HTMLInputElement>(null);
-
-  const update = useCallback(
-    <K extends keyof ProjectFormData>(key: K, value: ProjectFormData[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
-    },
-    []
-  );
+  const [projectTypeOpen, setProjectTypeOpen] = useState(false);
 
   return (
     <form
@@ -276,19 +298,27 @@ export default function CreateProjectForm() {
       <input
         type="text"
         value={form.title}
-        onChange={(e) => update("title", e.target.value)}
+        onChange={(e) => {
+          if (e.target.value.length <= 50) update("title", e.target.value);
+        }}
+        onFocus={() => onFieldInteraction?.("title")}
+        maxLength={50}
         placeholder="Project Name"
-        className="type-headline bg-transparent border-none outline-none text-text-primary placeholder:text-text-tertiary w-full"
+        className={`type-headline bg-transparent outline-none text-text-primary placeholder:text-text-tertiary w-full rounded-[var(--radius-sm)] px-1 -mx-1 transition-all duration-[var(--duration-micro)] ${
+          fieldErrors?.has("title")
+            ? "border border-error ring-2 ring-error/25"
+            : "border border-transparent"
+        }`}
       />
 
       {/* Timeline */}
-      <div className="flex items-start gap-sm px-[var(--input-px)] py-3 rounded-[var(--radius-md)] border border-border bg-background overflow-hidden">
-        <Calendar size={18} className="text-text-tertiary shrink-0 mt-0.5" />
-        <span className="type-body text-text-primary shrink-0 mt-0.5">Timeline</span>
+      <div className="flex flex-wrap items-center gap-sm px-[var(--input-px)] py-3 rounded-[var(--radius-md)] border border-border bg-background">
+        <Calendar size={18} className="text-text-tertiary shrink-0" />
+        <span className="type-body text-text-primary shrink-0">Timeline</span>
         <span className="flex-1" />
 
-        {/* Right-aligned controls: row on lg, column on small */}
-        <div className="flex lg:flex-row lg:items-center flex-col items-end gap-1.5">
+        {/* Right-aligned controls — wrap to new row when tight */}
+        <div className="flex flex-wrap items-center gap-1.5">
           {/* Date range picker */}
           <Popover
             opened={calendarOpen}
@@ -333,8 +363,7 @@ export default function CreateProjectForm() {
             </Popover.Dropdown>
           </Popover>
 
-          {/* Divider: vertical on lg, horizontal on small */}
-          <span className="hidden lg:block w-px h-5 bg-border shrink-0" />
+          <span className="w-px h-5 bg-border shrink-0" />
 
           {/* Time commitment dropdown */}
           <Popover
@@ -347,8 +376,15 @@ export default function CreateProjectForm() {
             <Popover.Target>
               <button
                 type="button"
-                onClick={() => setCommitmentOpen((o) => !o)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-micro)] cursor-pointer min-w-0"
+                onClick={() => {
+                  setCommitmentOpen((o) => !o);
+                  onFieldInteraction?.("timeCommitment");
+                }}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-micro)] cursor-pointer min-w-0 ${
+                  fieldErrors?.has("timeCommitment")
+                    ? "border border-error ring-2 ring-error/25"
+                    : ""
+                }`}
               >
                 <Clock size={16} className="text-text-tertiary shrink-0" />
                 <span className="type-body truncate">
@@ -406,7 +442,7 @@ export default function CreateProjectForm() {
         locationType={form.locationType}
         locationDetail={form.locationDetail}
         onTypeChange={(v) => update("locationType", v)}
-        onDetailChange={(v) => update("locationDetail", v)}
+        onDetailChange={(v: string[]) => update("locationDetail", v)}
       />
 
       {/* Description */}
@@ -420,10 +456,15 @@ export default function CreateProjectForm() {
               e.target.style.height = `${Math.min(e.target.scrollHeight, 300)}px`;
             }
           }}
+          onFocus={() => onFieldInteraction?.("description")}
           placeholder="Describe the project, what you're looking for, deliverables, and expectations..."
           rows={5}
           maxLength={2000}
-          className="w-full px-[var(--input-px)] py-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-colors duration-[var(--duration-micro)] overflow-y-auto"
+          className={`w-full px-[var(--input-px)] py-3 rounded-[var(--radius-sm)] border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-colors duration-[var(--duration-micro)] overflow-y-auto ${
+            fieldErrors?.has("description")
+              ? "border-error ring-2 ring-error/25"
+              : "border-border"
+          }`}
           style={{ maxHeight: "300px" }}
         />
         <span className={`absolute bottom-2 right-3 type-caption ${form.description.length > 1800 ? "text-error" : "text-text-tertiary"}`}>
@@ -442,7 +483,10 @@ export default function CreateProjectForm() {
             value={form.compensationAmount}
             onChange={(e) => update("compensationAmount", e.target.value)}
             onBlur={() => {
-              if (!form.compensationAmount) setCompEditing(false);
+              if (!form.compensationAmount || !form.compensationAmount.replace(/\$\s*/g, "").trim()) {
+                update("compensationAmount", "");
+                setCompEditing(false);
+              }
             }}
             placeholder="e.g. $500"
             className={`absolute inset-0 text-right bg-transparent border-none outline-none type-body text-text-secondary placeholder:text-text-tertiary transition-opacity duration-[var(--duration-base)] ${
@@ -453,7 +497,11 @@ export default function CreateProjectForm() {
             type="button"
             onClick={() => {
               setCompEditing(true);
-              requestAnimationFrame(() => compInputRef.current?.focus());
+              update("compensationAmount", "$");
+              requestAnimationFrame(() => {
+                compInputRef.current?.focus();
+                compInputRef.current?.setSelectionRange(1, 1);
+              });
             }}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-base)] cursor-pointer ${
               compEditing || form.compensationAmount ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -463,6 +511,56 @@ export default function CreateProjectForm() {
           </button>
         </div>
       </div>
+
+      {/* Project Type */}
+      <Popover
+        opened={projectTypeOpen}
+        onChange={setProjectTypeOpen}
+        position="bottom-start"
+        shadow="md"
+        width="target"
+        transitionProps={{ transition: dropDown, duration: 150 }}
+      >
+        <Popover.Target>
+          <button
+            type="button"
+            onClick={() => setProjectTypeOpen((o) => !o)}
+            className="w-full flex items-center gap-sm px-[var(--input-px)] h-[48px] rounded-[var(--radius-md)] border border-border bg-background hover:border-border-hover transition-all duration-[var(--duration-micro)] cursor-pointer text-left"
+          >
+            <Crown size={18} className="text-text-tertiary shrink-0" />
+            <span className="type-body text-text-primary shrink-0">Project Type</span>
+            <span className="flex-1" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-micro)]">
+              <span className="type-body">
+                {form.projectType
+                  ? PROJECT_TYPE_OPTIONS.find((o) => o.value === form.projectType)?.label ?? form.projectType
+                  : "Select type"}
+              </span>
+              <ChevronDown size={16} className="text-text-tertiary shrink-0" />
+            </span>
+          </button>
+        </Popover.Target>
+        <Popover.Dropdown className="!p-1.5 !bg-surface-3 !border-border">
+          {PROJECT_TYPE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                update("projectType", form.projectType === opt.value ? "" : opt.value);
+                setProjectTypeOpen(false);
+              }}
+              className={`w-full flex items-center px-3 py-2 rounded-[var(--radius-sm)] type-body transition-colors duration-[var(--duration-micro)] cursor-pointer ${
+                form.projectType === opt.value
+                  ? "bg-surface-2 text-text-primary font-medium"
+                  : "text-text-secondary hover:bg-surface-2 hover:text-text-primary"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </Popover.Dropdown>
+      </Popover>
+
     </form>
   );
 }
