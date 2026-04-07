@@ -6,6 +6,7 @@ export interface ProjectFormData {
   startDate: string;
   endDate: string;
   duration: string;
+  timeCommitment: string;
   compensationType: "paid" | "unpaid" | "equity";
   compensationAmount: string;
   locationType: "remote" | "on-site" | "hybrid";
@@ -36,6 +37,7 @@ export const INITIAL_PROJECT: ProjectFormData = {
   startDate: "",
   endDate: "",
   duration: "",
+  timeCommitment: "",
   compensationType: "paid",
   compensationAmount: "",
   locationType: "remote",

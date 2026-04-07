@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -27,12 +26,11 @@ export default function Footer() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-lg">
             <Link href="/" className="flex items-center gap-2xs">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src="/logo_group.svg"
-                alt="Applicable"
-                width={114}
-                height={28}
-                className="brightness-[2]"
+                alt="SOAR"
+                className="h-[28px] w-auto brightness-[2]"
               />
             </Link>
 

@@ -36,7 +36,7 @@
   --border-base: rgba(0, 0, 0, 0.08);
   --border-divider: rgba(0, 0, 0, 0.04);
   --border-hover: rgba(0, 0, 0, 0.12);
-  --border-focus: rgba(0, 0, 0, 0.16);
+  --border-focus: var(--primary);
 
   /* -- Elevation (Box Shadow) -- */
   --shadow-low: 0 0px 1px 0px rgba(0, 0, 0, 0.071);
@@ -228,6 +228,17 @@ body {
   font-family: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
 }
 
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
 /* ============================================================
    Layout Utilities
    ============================================================ */
@@ -251,6 +262,93 @@ body {
 
 .nav-link:hover {
   color: var(--text-primary);
+}
+
+/* ============================================================
+   Slightly darker DatePicker (Mantine overrides)
+   ============================================================ */
+
+.datepicker-dark {
+  --mantine-color-body: var(--surface-3);
+}
+
+.datepicker-dark .mantine-DatePicker-calendarHeader {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+}
+
+.datepicker-dark .mantine-DatePicker-calendarHeaderLevel {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.datepicker-dark .mantine-DatePicker-calendarHeaderControl {
+  color: var(--text-secondary);
+}
+
+.datepicker-dark .mantine-DatePicker-calendarHeaderControl:hover {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.datepicker-dark .mantine-DatePicker-weekday {
+  color: var(--text-secondary);
+}
+
+.datepicker-dark .mantine-DatePicker-day {
+  color: var(--text-primary);
+}
+
+.datepicker-dark .mantine-DatePicker-day[data-outside] {
+  color: var(--text-tertiary);
+}
+
+/* Weekend days (Sat = 6th col, Sun = 7th col) */
+.datepicker-dark tr td:nth-child(6) .mantine-DatePicker-day,
+.datepicker-dark tr td:nth-child(7) .mantine-DatePicker-day {
+  color: var(--error);
+}
+
+.datepicker-dark tr td:nth-child(6) .mantine-DatePicker-day[data-outside],
+.datepicker-dark tr td:nth-child(7) .mantine-DatePicker-day[data-outside] {
+  color: color-mix(in srgb, var(--error) 40%, transparent);
+}
+
+.datepicker-dark tr td:nth-child(6) .mantine-DatePicker-day[data-selected],
+.datepicker-dark tr td:nth-child(7) .mantine-DatePicker-day[data-selected],
+.datepicker-dark tr td:nth-child(6) .mantine-DatePicker-day[data-first-in-range],
+.datepicker-dark tr td:nth-child(7) .mantine-DatePicker-day[data-first-in-range],
+.datepicker-dark tr td:nth-child(6) .mantine-DatePicker-day[data-last-in-range],
+.datepicker-dark tr td:nth-child(7) .mantine-DatePicker-day[data-last-in-range] {
+  color: #fff;
+}
+
+.datepicker-dark .mantine-DatePicker-day:hover {
+  background: var(--surface-2);
+}
+
+.datepicker-dark .mantine-DatePicker-day[data-selected] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.datepicker-dark .mantine-DatePicker-day[data-in-range] {
+  background: var(--primary-tint);
+  color: var(--text-primary);
+}
+
+.datepicker-dark .mantine-DatePicker-day[data-first-in-range],
+.datepicker-dark .mantine-DatePicker-day[data-last-in-range] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.datepicker-dark .mantine-DatePicker-pickerControl {
+  color: var(--text-primary);
+}
+
+.datepicker-dark .mantine-DatePicker-pickerControl:hover {
+  background: var(--surface-2);
 }
 
 /* ============================================================

@@ -3,14 +3,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Calendar,
+  CalendarRange,
   MapPin,
   DollarSign,
-  Users,
-  Tag,
-  ShieldCheck,
-  Eye,
+  Clock,
+  ChevronDown,
   X,
-  AlignLeft,
   Search,
   Globe,
   Building2,
@@ -18,169 +16,17 @@ import {
 } from "lucide-react";
 import { Popover } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
+import type { MantineTransition } from "@mantine/core";
 import { ProjectFormData, INITIAL_PROJECT } from "@/app/lib/types";
 
-/* ── Shared field wrapper ────────────────────────────── */
+/* ── Dropdown transition (drop down from top) ──────── */
 
-function FieldGroup({
-  icon: Icon,
-  label,
-  children,
-}: {
-  icon: React.ElementType;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-3xs">
-      <label className="type-caption font-medium text-text-secondary flex items-center gap-2xs">
-        <Icon size={14} className="text-text-tertiary" />
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-/* ── Toggle switch ───────────────────────────────────── */
-
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`
-        relative w-11 h-6 rounded-full transition-colors duration-[var(--duration-micro)] cursor-pointer
-        ${checked ? "bg-primary" : "bg-surface-3"}
-      `}
-    >
-      <span
-        className={`
-          absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-mid
-          transition-transform duration-[var(--duration-base)] [transition-timing-function:var(--ease-enter)]
-          ${checked ? "translate-x-5" : "translate-x-0"}
-        `}
-      />
-    </button>
-  );
-}
-
-/* ── Pill selector ───────────────────────────────────── */
-
-function PillSelect<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { label: string; value: T }[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div className="flex gap-2xs">
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => onChange(opt.value)}
-          className={`
-            px-3 h-[var(--btn-height-sm)] rounded-full type-caption font-medium
-            transition-all duration-[var(--duration-micro)] cursor-pointer
-            ${
-              value === opt.value
-                ? "bg-surface-dark text-white"
-                : "bg-surface-1 text-text-secondary hover:bg-surface-2"
-            }
-          `}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ── Skills tag input ────────────────────────────────── */
-
-function SkillsInput({
-  skills,
-  onChange,
-}: {
-  skills: string[];
-  onChange: (skills: string[]) => void;
-}) {
-  const [input, setInput] = useState("");
-
-  const addSkill = () => {
-    const trimmed = input.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      onChange([...skills, trimmed]);
-    }
-    setInput("");
-  };
-
-  return (
-    <div className="flex flex-col gap-2xs">
-      <div className="flex flex-wrap gap-2xs">
-        {skills.map((skill) => (
-          <span
-            key={skill}
-            className="inline-flex items-center gap-1 px-2.5 h-7 bg-surface-1 text-text-primary type-caption font-medium rounded-full"
-          >
-            {skill}
-            <button
-              type="button"
-              onClick={() => onChange(skills.filter((s) => s !== skill))}
-              className="text-text-tertiary hover:text-text-primary cursor-pointer"
-            >
-              <X size={12} />
-            </button>
-          </span>
-        ))}
-      </div>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            addSkill();
-          }
-        }}
-        placeholder="Type a skill and press Enter"
-        className="h-[var(--input-height)] px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
-      />
-    </div>
-  );
-}
-
-/* ── Section card ────────────────────────────────────── */
-
-function Section({
-  title,
-  children,
-}: {
-  title?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-surface-1 rounded-[var(--radius-md)] p-2xs flex flex-col gap-sm">
-      {title && (
-        <h3 className="type-body font-semibold text-text-primary">{title}</h3>
-      )}
-      {children}
-    </div>
-  );
-}
+const dropDown: MantineTransition = {
+  in: { opacity: 1, transform: "scale(1)" },
+  out: { opacity: 0, transform: "scale(0.9)" },
+  common: { transformOrigin: "top center" },
+  transitionProperty: "opacity, transform",
+};
 
 /* ── Location picker ────────────────────────────────── */
 
@@ -276,7 +122,7 @@ function LocationPicker({
   };
 
   return (
-    <Popover opened={open} onChange={setOpen} position="bottom-start" shadow="md" width="target">
+    <Popover opened={open} onChange={setOpen} position="bottom-start" shadow="md" width="target" transitionProps={{ transition: dropDown, duration: 150 }}>
       <Popover.Target>
         <button
           type="button"
@@ -285,19 +131,18 @@ function LocationPicker({
         >
           <MapPin size={18} className="text-text-tertiary shrink-0" />
           {hasLocation ? (
-            <div className="flex items-center gap-2xs min-w-0 flex-wrap">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-2 type-caption font-medium text-text-primary shrink-0">
-                {locationType === "remote" && <Globe size={12} />}
-                {locationType === "on-site" && <Building2 size={12} />}
-                {locationType === "hybrid" && <ArrowLeftRight size={12} />}
+            <>
+              <span className="type-body text-text-secondary truncate min-w-0">
+                {locationDetail || "No address"}
+              </span>
+              <span className="flex-1" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-surface-2 type-body font-medium text-text-primary shrink-0">
+                {locationType === "remote" && <Globe size={14} />}
+                {locationType === "on-site" && <Building2 size={14} />}
+                {locationType === "hybrid" && <ArrowLeftRight size={14} />}
                 {TYPE_LABELS[locationType]}
               </span>
-              {locationDetail && (
-                <span className="type-body text-text-secondary truncate">
-                  {locationDetail}
-                </span>
-              )}
-            </div>
+            </>
           ) : (
             <div className="flex flex-col min-w-0">
               <span className="type-body font-medium text-text-primary">
@@ -311,7 +156,7 @@ function LocationPicker({
         </button>
       </Popover.Target>
 
-      <Popover.Dropdown className="!p-0 overflow-hidden">
+      <Popover.Dropdown className="!p-0 overflow-hidden !bg-surface-3 !border-border">
         {/* Type presets */}
         <div className="p-1.5 flex flex-col">
           <span className="px-3 py-1 type-caption font-medium text-text-tertiary">Type</span>
@@ -326,7 +171,7 @@ function LocationPicker({
                 className={`flex items-center gap-sm px-3 py-2 rounded-[var(--radius-sm)] type-body transition-colors duration-[var(--duration-micro)] cursor-pointer ${
                   isActive
                     ? "bg-surface-2 text-text-primary font-medium"
-                    : "text-text-secondary hover:bg-surface-1"
+                    : "text-text-secondary hover:bg-surface-2 hover:text-text-primary"
                 }`}
               >
                 <Icon size={16} className="text-text-tertiary" />
@@ -344,7 +189,7 @@ function LocationPicker({
             </span>
 
             {/* Search input */}
-            <div className="flex items-center gap-2xs px-3 mx-1.5 mb-1.5 rounded-[var(--radius-sm)] border border-border bg-background">
+            <div className="flex items-center gap-2xs px-3 mx-1.5 mb-1.5 rounded-[var(--radius-sm)] border border-border bg-surface-2">
               <Search size={14} className="text-text-tertiary shrink-0" />
               <input
                 type="text"
@@ -373,7 +218,7 @@ function LocationPicker({
                     key={s.place_id}
                     type="button"
                     onClick={() => selectAddress(s.display_name)}
-                    className="flex items-start gap-sm px-3 py-2 rounded-[var(--radius-sm)] type-caption text-text-secondary hover:bg-surface-1 cursor-pointer text-left transition-colors duration-[var(--duration-micro)]"
+                    className="flex items-start gap-sm px-3 py-2 rounded-[var(--radius-sm)] type-caption text-text-secondary hover:bg-surface-2 hover:text-text-primary cursor-pointer text-left transition-colors duration-[var(--duration-micro)]"
                   >
                     <MapPin size={14} className="text-text-tertiary shrink-0 mt-0.5" />
                     <span className="line-clamp-2">{s.display_name}</span>
@@ -387,7 +232,7 @@ function LocationPicker({
               <div className="px-3 pb-2 border-t border-border pt-2 mx-1.5 mb-1">
                 <div className="flex items-center gap-2xs type-caption text-text-secondary">
                   <MapPin size={12} className="shrink-0" />
-                  <span className="truncate">{locationDetail}</span>
+                  <span className="truncate text-text-primary">{locationDetail}</span>
                   <button
                     type="button"
                     onClick={() => onDetailChange("")}
@@ -411,6 +256,9 @@ export default function CreateProjectForm() {
   const [form, setForm] = useState<ProjectFormData>(INITIAL_PROJECT);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<[string | null, string | null]>([null, null]);
+  const [commitmentOpen, setCommitmentOpen] = useState(false);
+  const [compEditing, setCompEditing] = useState(false);
+  const compInputRef = useRef<HTMLInputElement>(null);
 
   const update = useCallback(
     <K extends keyof ProjectFormData>(key: K, value: ProjectFormData[K]) => {
@@ -434,32 +282,36 @@ export default function CreateProjectForm() {
       />
 
       {/* Timeline */}
-      <div className="bg-surface-1 rounded-[var(--radius-md)] p-2xs flex items-center gap-sm">
-        <h3 className="type-body font-semibold text-text-primary shrink-0">Project Timeline</h3>
-        <div className="flex items-center gap-2xs flex-1 min-w-0">
-          <input
-            type="text"
-            value={form.duration}
-            onChange={(e) => update("duration", e.target.value)}
-            placeholder="e.g. 2 weeks, March — April"
-            className="h-10 flex-1 px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
-          />
+      <div className="flex items-start gap-sm px-[var(--input-px)] py-3 rounded-[var(--radius-md)] border border-border bg-background overflow-hidden">
+        <Calendar size={18} className="text-text-tertiary shrink-0 mt-0.5" />
+        <span className="type-body text-text-primary shrink-0 mt-0.5">Timeline</span>
+        <span className="flex-1" />
+
+        {/* Right-aligned controls: row on lg, column on small */}
+        <div className="flex lg:flex-row lg:items-center flex-col items-end gap-1.5">
+          {/* Date range picker */}
           <Popover
             opened={calendarOpen}
             onChange={setCalendarOpen}
             position="bottom-end"
             shadow="md"
+            transitionProps={{ transition: dropDown, duration: 150 }}
           >
             <Popover.Target>
               <button
                 type="button"
                 onClick={() => setCalendarOpen((o) => !o)}
-                className="h-10 w-10 shrink-0 flex items-center justify-center rounded-[var(--radius-sm)] border border-border bg-background text-text-tertiary hover:text-text-primary hover:border-border-hover transition-all duration-[var(--duration-micro)] cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-micro)] cursor-pointer min-w-0"
               >
-                <Calendar size={16} />
+                <span className="type-body truncate">
+                  {dateRange[0] && dateRange[1]
+                    ? `${new Date(dateRange[0]).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — ${new Date(dateRange[1]).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                    : "Select dates"}
+                </span>
+                <CalendarRange size={16} className="text-text-tertiary shrink-0" />
               </button>
             </Popover.Target>
-            <Popover.Dropdown>
+            <Popover.Dropdown className="datepicker-dark !bg-surface-3 !border-border">
               <DatePicker
                 type="range"
                 value={dateRange}
@@ -471,6 +323,8 @@ export default function CreateProjectForm() {
                         month: "short",
                         day: "numeric",
                       });
+                    update("startDate", val[0]);
+                    update("endDate", val[1]);
                     update("duration", `${fmt(val[0])} — ${fmt(val[1])}`);
                     setCalendarOpen(false);
                   }
@@ -478,8 +332,82 @@ export default function CreateProjectForm() {
               />
             </Popover.Dropdown>
           </Popover>
+
+          {/* Divider: vertical on lg, horizontal on small */}
+          <span className="hidden lg:block w-px h-5 bg-border shrink-0" />
+
+          {/* Time commitment dropdown */}
+          <Popover
+            opened={commitmentOpen}
+            onChange={setCommitmentOpen}
+            position="bottom-end"
+            shadow="md"
+            transitionProps={{ transition: dropDown, duration: 150 }}
+          >
+            <Popover.Target>
+              <button
+                type="button"
+                onClick={() => setCommitmentOpen((o) => !o)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-micro)] cursor-pointer min-w-0"
+              >
+                <Clock size={16} className="text-text-tertiary shrink-0" />
+                <span className="type-body truncate">
+                  {form.timeCommitment || "Hours"}
+                </span>
+                <ChevronDown size={16} className="text-text-tertiary shrink-0" />
+              </button>
+            </Popover.Target>
+            <Popover.Dropdown className="!p-1.5 !bg-surface-3 !border-border !min-w-[150px]">
+              {[
+                { label: "< 10", value: "<10 hours" },
+                { label: "10-20", value: "10 - 20 hours" },
+                { label: "20+", value: "20+ hours" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    update("timeCommitment", opt.value);
+                    setCommitmentOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] type-body transition-colors duration-[var(--duration-micro)] cursor-pointer ${
+                    form.timeCommitment === opt.value
+                      ? "bg-surface-2 text-text-primary font-medium"
+                      : "text-text-secondary hover:bg-surface-2 hover:text-text-primary"
+                  }`}
+                >
+                  <span>{opt.label}</span>
+                  <span className="text-text-tertiary">hours</span>
+                </button>
+              ))}
+              <div className="border-t border-border mt-1 pt-1">
+                <input
+                  type="text"
+                  placeholder="Custom"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = (e.target as HTMLInputElement).value.trim();
+                      if (val) {
+                        update("timeCommitment", val);
+                        setCommitmentOpen(false);
+                      }
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-[var(--radius-sm)] bg-surface-2 border-none outline-none type-body text-text-primary placeholder:text-text-tertiary"
+                />
+              </div>
+            </Popover.Dropdown>
+          </Popover>
         </div>
       </div>
+
+      {/* Location */}
+      <LocationPicker
+        locationType={form.locationType}
+        locationDetail={form.locationDetail}
+        onTypeChange={(v) => update("locationType", v)}
+        onDetailChange={(v) => update("locationDetail", v)}
+      />
 
       {/* Description */}
       <div className="relative">
@@ -493,7 +421,7 @@ export default function CreateProjectForm() {
             }
           }}
           placeholder="Describe the project, what you're looking for, deliverables, and expectations..."
-          rows={3}
+          rows={5}
           maxLength={2000}
           className="w-full px-[var(--input-px)] py-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-colors duration-[var(--duration-micro)] overflow-y-auto"
           style={{ maxHeight: "300px" }}
@@ -503,96 +431,38 @@ export default function CreateProjectForm() {
         </span>
       </div>
 
-      {/* Location */}
-      <LocationPicker
-        locationType={form.locationType}
-        locationDetail={form.locationDetail}
-        onTypeChange={(v) => update("locationType", v)}
-        onDetailChange={(v) => update("locationDetail", v)}
-      />
-
       {/* Compensation */}
-      <Section title="Compensation">
-        <FieldGroup icon={DollarSign} label="Type">
-          <PillSelect
-            options={[
-              { label: "Paid", value: "paid" as const },
-              { label: "Unpaid", value: "unpaid" as const },
-              { label: "Equity", value: "equity" as const },
-            ]}
-            value={form.compensationType}
-            onChange={(v) => update("compensationType", v)}
-          />
-        </FieldGroup>
-        {form.compensationType !== "unpaid" && (
-          <FieldGroup
-            icon={DollarSign}
-            label={
-              form.compensationType === "equity"
-                ? "Equity Details"
-                : "Amount"
-            }
-          >
-            <input
-              type="text"
-              value={form.compensationAmount}
-              onChange={(e) => update("compensationAmount", e.target.value)}
-              placeholder={
-                form.compensationType === "equity"
-                  ? "e.g. 2% equity"
-                  : "e.g. $500 / project"
-              }
-              className="h-[var(--input-height)] w-full px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
-            />
-          </FieldGroup>
-        )}
-      </Section>
-
-
-      {/* Skills */}
-      <Section title="Required Skills">
-        <FieldGroup icon={Tag} label="Skills">
-          <SkillsInput
-            skills={form.skills}
-            onChange={(skills) => update("skills", skills)}
-          />
-        </FieldGroup>
-      </Section>
-
-      {/* Options */}
-      <Section title="Options">
-        <FieldGroup icon={Users} label="Capacity">
+      <div className="flex items-center gap-sm px-[var(--input-px)] h-[48px] rounded-[var(--radius-md)] border border-border bg-background">
+        <DollarSign size={18} className="text-text-tertiary shrink-0" />
+        <span className="type-body text-text-primary shrink-0">Compensation</span>
+        <div className="flex-1 relative flex items-center justify-end">
           <input
+            ref={compInputRef}
             type="text"
-            value={form.capacity}
-            onChange={(e) => update("capacity", e.target.value)}
-            placeholder="e.g. 3 people"
-            className="h-[var(--input-height)] w-full px-[var(--input-px)] rounded-[var(--radius-sm)] border border-border bg-background text-text-primary type-body placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)] transition-all duration-[var(--duration-micro)]"
+            value={form.compensationAmount}
+            onChange={(e) => update("compensationAmount", e.target.value)}
+            onBlur={() => {
+              if (!form.compensationAmount) setCompEditing(false);
+            }}
+            placeholder="e.g. $500"
+            className={`absolute inset-0 text-right bg-transparent border-none outline-none type-body text-text-secondary placeholder:text-text-tertiary transition-opacity duration-[var(--duration-base)] ${
+              compEditing || form.compensationAmount ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
           />
-        </FieldGroup>
-
-        <div className="flex items-center justify-between">
-          <label className="type-body text-text-primary flex items-center gap-2xs">
-            <ShieldCheck size={16} className="text-text-tertiary" />
-            Require Approval
-          </label>
-          <Toggle
-            checked={form.requireApproval}
-            onChange={(v) => update("requireApproval", v)}
-          />
+          <button
+            type="button"
+            onClick={() => {
+              setCompEditing(true);
+              requestAnimationFrame(() => compInputRef.current?.focus());
+            }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-base)] cursor-pointer ${
+              compEditing || form.compensationAmount ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+          >
+            <span className="type-body">None</span>
+          </button>
         </div>
-
-        <div className="flex items-center justify-between">
-          <label className="type-body text-text-primary flex items-center gap-2xs">
-            <Eye size={16} className="text-text-tertiary" />
-            Public Visibility
-          </label>
-          <Toggle
-            checked={form.visibility === "public"}
-            onChange={(v) => update("visibility", v ? "public" : "private")}
-          />
-        </div>
-      </Section>
+      </div>
     </form>
   );
 }

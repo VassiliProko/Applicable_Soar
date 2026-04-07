@@ -1,7 +1,6 @@
 "use client";
 
 import { ButtonHTMLAttributes, forwardRef } from "react";
-import { ArrowRight } from "lucide-react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
@@ -13,7 +12,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-surface-dark text-white hover:brightness-125 active:brightness-95",
+    "bg-surface-dark text-white hover:opacity-80 active:opacity-90",
   secondary:
     "bg-transparent border border-border text-primary hover:border-border-hover active:bg-primary-tint",
   ghost:
@@ -28,13 +27,10 @@ const sizeClasses: Record<ButtonSize, string> = {
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "primary", size = "md", className = "", children, ...props }, ref) => {
-    const isPrimary = variant === "primary";
-
     return (
       <button
         ref={ref}
         className={`
-          group
           inline-flex items-center justify-center gap-2
           rounded-[var(--radius-sm)] font-medium
           transition-all duration-[var(--duration-base)]
@@ -50,17 +46,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {children}
-        {isPrimary && (
-          <ArrowRight
-            size={16}
-            className="
-              -ml-1 w-0 opacity-0
-              group-hover:w-4 group-hover:opacity-100 group-hover:ml-0
-              transition-all duration-[var(--duration-base)]
-              [transition-timing-function:var(--ease-enter)]
-            "
-          />
-        )}
       </button>
     );
   }

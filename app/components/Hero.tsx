@@ -1,16 +1,14 @@
 import Link from "next/link";
-import Image from "next/image";
 import Button from "./ui/Button";
 
 export default function Hero() {
   return (
     <section className="pt-2xl pb-2xl">
       <div className="flex items-center gap-1 mb-2xs">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/logo_group.svg"
           alt=""
-          width={122}
-          height={30}
           className="h-[30px] w-auto"
         />
       </div>
