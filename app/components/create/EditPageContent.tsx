@@ -72,7 +72,6 @@ export default function EditPageContent({ projectId }: EditPageContentProps) {
         timeCommitment: p.timeCommitment,
         compensationType: p.compensationType,
         compensationAmount: p.compensationAmount,
-        projectType: p.projectType,
         locationType: p.locationType,
         locationDetail: p.locationDetail,
         skills: p.skills,

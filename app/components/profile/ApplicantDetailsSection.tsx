@@ -21,6 +21,7 @@ export default function ApplicantDetailsSection({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fullName, setFullName] = useState(profile.fullName ?? "");
+  const [bio, setBio] = useState(profile.bio ?? "");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>(profile.skills);
   const [portfolioUrl, setPortfolioUrl] = useState(
@@ -31,6 +32,7 @@ export default function ApplicantDetailsSection({
 
   const startEditing = () => {
     setFullName(profile.fullName ?? "");
+    setBio(profile.bio ?? "");
     setSkills([...profile.skills]);
     setPortfolioUrl(profile.portfolioUrl ?? "");
     setResumeFile(null);
@@ -101,6 +103,7 @@ export default function ApplicantDetailsSection({
 
     const result = await updateUserProfile({
       fullName: fullName.trim(),
+      bio: bio.trim() || undefined,
       skills,
       portfolioUrl: portfolioUrl.trim() || undefined,
       ...(resumeUrl !== undefined ? { resumeUrl } : {}),
@@ -120,7 +123,7 @@ export default function ApplicantDetailsSection({
   return (
     <section>
       <div className="flex items-center justify-between mb-sm">
-        <h2 className="type-title text-text-primary">Your Details</h2>
+        <h2 className="type-title text-text-primary">Learner Profile</h2>
         {!editing && (
           <button
             onClick={startEditing}
@@ -150,6 +153,33 @@ export default function ApplicantDetailsSection({
               }}
               maxLength={100}
             />
+
+            {/* Bio */}
+            <div className="flex flex-col gap-[var(--space-3xs)]">
+              <label className="type-caption font-medium text-text-secondary">
+                About you
+              </label>
+              <textarea
+                placeholder="A short description about yourself..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={300}
+                rows={3}
+                className="
+                  px-[var(--input-px)] py-2xs
+                  rounded-[var(--radius-sm)]
+                  border border-border bg-background text-text-primary type-body
+                  transition-all duration-[var(--duration-micro)]
+                  placeholder:text-text-tertiary
+                  focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)]
+                  hover:border-border-hover
+                  resize-none
+                "
+              />
+              <span className="type-caption text-text-tertiary text-right">
+                {bio.length}/300
+              </span>
+            </div>
 
             {/* Skills */}
             <div className="flex flex-col gap-[var(--space-3xs)]">
@@ -320,6 +350,12 @@ export default function ApplicantDetailsSection({
             </p>
           )}
 
+          {profile.bio && (
+            <p className="type-body text-text-secondary mt-xs whitespace-pre-wrap">
+              {profile.bio}
+            </p>
+          )}
+
           {profile.skills.length > 0 && (
             <div className="flex flex-wrap gap-2xs mt-xs">
               {profile.skills.map((skill) => (
@@ -357,6 +393,7 @@ export default function ApplicantDetailsSection({
           )}
 
           {!profile.fullName &&
+            !profile.bio &&
             profile.skills.length === 0 &&
             !profile.portfolioUrl && (
               <p className="type-body text-text-tertiary">

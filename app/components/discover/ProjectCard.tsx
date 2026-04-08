@@ -9,12 +9,10 @@ import {
   Globe,
   Building2,
   ArrowLeftRight,
-  Crown,
   Share2,
   Check,
 } from "lucide-react";
 import type { ProjectFormData } from "@/app/lib/types";
-import { PROJECT_TYPE_OPTIONS } from "@/app/lib/types";
 
 export interface PublicProject extends ProjectFormData {
   id: string;
@@ -78,10 +76,6 @@ export default function ProjectCard({ project }: { project: PublicProject }) {
   const favicon = getFaviconUrl(project.organization?.website);
   const LocationIcon = LOCATION_ICONS[project.locationType] ?? Globe;
   const timeline = formatTimeline(project.startDate, project.endDate);
-
-  const projectTypeLabel = project.projectType
-    ? PROJECT_TYPE_OPTIONS.find((o) => o.value === project.projectType)?.label
-    : null;
 
   const handleCardClick = () => {
     router.push(`/project/${project.id}`);
@@ -204,13 +198,6 @@ export default function ProjectCard({ project }: { project: PublicProject }) {
               </div>
             )}
 
-            {/* Project type */}
-            {projectTypeLabel && (
-              <div className="flex items-center gap-2xs text-text-secondary">
-                <Crown size={15} className="text-text-tertiary shrink-0" />
-                <span className="type-body">{projectTypeLabel}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>

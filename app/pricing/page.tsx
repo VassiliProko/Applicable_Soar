@@ -10,15 +10,15 @@ const freeTierFeatures = [
   "Basic project page",
   "Team member listing",
   "Listed in discover feed",
-  "Applicant notifications",
+  "Learner notifications",
 ];
 
 const proTierFeatures = [
   "Unlimited project postings",
   "Everything in Free, plus:",
-  "Applicant analytics & insights",
+  "Learner analytics & insights",
   "Priority discover placement",
-  "Export applicant data",
+  "Export learner data",
   "Custom project branding",
 ];
 

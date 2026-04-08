@@ -14,8 +14,8 @@ function getInitial(name?: string, email?: string) {
 
 const ROLE_LABELS: Record<string, string> = {
   poster: "Poster",
-  applicant: "Applicant",
-  both: "Poster & Applicant",
+  learner: "Learner",
+  both: "Poster & Learner",
 };
 
 export default function ProfileHeader({ user, role }: ProfileHeaderProps) {

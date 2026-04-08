@@ -4,7 +4,6 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FileText, X } from "lucide-react";
 import type { ProjectWithMeta } from "@/app/lib/types";
-import { PROJECT_TYPE_OPTIONS } from "@/app/lib/types";
 
 const LOCATION_LABELS: Record<string, string> = {
   remote: "Remote",
@@ -30,9 +29,6 @@ export default function ProjectDetailContent({
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const timeline = formatTimeline(project.startDate, project.endDate);
-  const projectTypeLabel = project.projectType
-    ? PROJECT_TYPE_OPTIONS.find((o) => o.value === project.projectType)?.label
-    : null;
 
   const hasCompensation =
     project.compensationAmount && project.compensationAmount !== "$";
@@ -58,16 +54,11 @@ export default function ProjectDetailContent({
       {/* Title */}
       <h1 className="type-display text-text-primary">{project.title}</h1>
 
-      {/* Project type */}
-      {projectTypeLabel && (
-        <p className="type-body text-text-secondary -mt-sm">{projectTypeLabel}</p>
-      )}
-
       <hr className="border-border" />
 
       {/* Description */}
       <section>
-        <h2 className="type-body font-semibold text-text-primary mb-sm">Description</h2>
+        <h2 className="type-caption font-bold! uppercase tracking-wide mb-sm">Description</h2>
         <p className="type-body text-text-secondary whitespace-pre-wrap leading-relaxed">
           {project.description}
         </p>
@@ -77,7 +68,7 @@ export default function ProjectDetailContent({
 
       {/* Details */}
       <section>
-        <h2 className="type-body font-semibold text-text-primary mb-sm">Details</h2>
+        <h2 className="type-caption font-bold! uppercase tracking-wide mb-sm">Details</h2>
         <div className="flex flex-col gap-sm">
           {details.map((d) => (
             <div key={d.label} className="flex items-baseline gap-md">

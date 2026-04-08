@@ -167,6 +167,7 @@ export async function getApplicationsForProject(projectId: string) {
       *,
       profile:user_profiles (
         full_name,
+        bio,
         skills,
         portfolio_url,
         resume_url
@@ -194,6 +195,7 @@ export async function getApplicationsForProject(projectId: string) {
         applicant: profile
           ? {
               fullName: profile.full_name as string | null,
+              bio: (profile.bio as string | null) ?? null,
               skills: (profile.skills as string[]) ?? [],
               portfolioUrl: profile.portfolio_url as string | null,
               resumeUrl: profile.resume_url as string | null,

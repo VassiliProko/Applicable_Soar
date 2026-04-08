@@ -6,43 +6,22 @@ import {
   Check,
   Hand,
   CalendarDays,
-  Globe,
-  Building2,
-  ArrowLeftRight,
-  Clock,
-  DollarSign,
-  Crown,
-  MapPin,
+  X,
 } from "lucide-react";
 import Button from "@/app/components/ui/Button";
 import AuthModal from "@/app/components/auth/AuthModal";
-import RoleSelectModal from "@/app/components/auth/RoleSelectModal";
 import ApplicantProfileModal from "@/app/components/auth/ApplicantProfileModal";
 import ApplyModal from "./ApplyModal";
 import { getApplicationStatus } from "@/app/actions/applications";
-import { getUserProfile } from "@/app/actions/profiles";
-import { getOrganization } from "@/app/actions/organizations";
+import { getUserProfile, createUserProfile, updateUserProfile } from "@/app/actions/profiles";
 import { createClient } from "@/utils/supabase/client";
-import type { ProjectWithMeta, UserProfile, UserRole } from "@/app/lib/types";
-import { PROJECT_TYPE_OPTIONS } from "@/app/lib/types";
+import type { ProjectWithMeta, UserProfile } from "@/app/lib/types";
 
 interface OrgInfo {
   companyName: string;
   website: string | null;
   industry: string;
 }
-
-const LOCATION_ICONS = {
-  remote: Globe,
-  "on-site": Building2,
-  hybrid: ArrowLeftRight,
-} as const;
-
-const LOCATION_LABELS: Record<string, string> = {
-  remote: "Remote",
-  "on-site": "In Person",
-  hybrid: "Hybrid",
-};
 
 function formatPostedDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -81,8 +60,8 @@ export default function ProjectDetailSidebar({
   const [isOwner, setIsOwner] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [roleSelectOpen, setRoleSelectOpen] = useState(false);
-  const [applicantSetupOpen, setApplicantSetupOpen] = useState(false);
+  const [learnerSetupOpen, setLearnerSetupOpen] = useState(false);
+  const [posterNeedsLearnerOpen, setPosterNeedsLearnerOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
@@ -126,11 +105,6 @@ export default function ProjectDetailSidebar({
   }, [checkStatus]);
 
   const favicon = getFaviconUrl(organization?.website);
-  const LocationIcon = LOCATION_ICONS[project.locationType] ?? Globe;
-  const projectTypeLabel = project.projectType
-    ? PROJECT_TYPE_OPTIONS.find((o) => o.value === project.projectType)?.label
-    : null;
-
   const handleShare = () => {
     const url = `${window.location.origin}/project/${project.id}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -155,28 +129,40 @@ export default function ProjectDetailSidebar({
     const { data: existingProfile } = await getUserProfile();
 
     if (!existingProfile) {
-      // No profile — need role selection first
-      setRoleSelectOpen(true);
+      // No profile — auto-create as learner, then open setup
+      await createUserProfile({ role: "learner" });
+      setLearnerSetupOpen(true);
       return;
     }
 
+    // Has profile — check if they're poster-only (no learner profile set up)
+    if (existingProfile.role === "poster") {
+      // Show the "you need a learner profile" popup
+      setPosterNeedsLearnerOpen(true);
+      return;
+    }
+
+    // They have a learner or both role — open apply modal
     setProfile(existingProfile);
     setApplyOpen(true);
   };
 
   const handleAuthenticated = async () => {
     setAuthOpen(false);
-    // After auth, check profile
+
+    // After auth, check for existing profile
     const { data: existingProfile } = await getUserProfile();
+
     if (!existingProfile) {
-      // Check for existing org (legacy poster)
-      const { data: org } = await getOrganization();
-      if (!org) {
-        setRoleSelectOpen(true);
-      } else {
-        // Legacy poster — open apply modal directly
-        setApplyOpen(true);
-      }
+      // New user — auto-create learner profile, then open setup
+      await createUserProfile({ role: "learner" });
+      setLearnerSetupOpen(true);
+      return;
+    }
+
+    // Existing user who signed in
+    if (existingProfile.role === "poster") {
+      setPosterNeedsLearnerOpen(true);
       return;
     }
 
@@ -184,20 +170,16 @@ export default function ProjectDetailSidebar({
     setApplyOpen(true);
   };
 
-  const handleRoleSelected = (role: UserRole) => {
-    setRoleSelectOpen(false);
-    if (role === "applicant") {
-      setApplicantSetupOpen(true);
-    } else {
-      // They chose poster, but we can still let them apply
-      // Open apply modal after org setup would be done elsewhere
-      setApplyOpen(true);
-    }
+  const handlePosterCreateLearner = async () => {
+    // Upgrade poster to "both" role
+    setPosterNeedsLearnerOpen(false);
+    await updateUserProfile({ role: "both" });
+    setLearnerSetupOpen(true);
   };
 
-  const handleApplicantSetupComplete = async () => {
-    setApplicantSetupOpen(false);
-    // Refresh profile
+  const handleLearnerSetupComplete = async () => {
+    setLearnerSetupOpen(false);
+    // Refresh profile and open apply modal
     const { data: refreshed } = await getUserProfile();
     if (refreshed) setProfile(refreshed);
     setApplyOpen(true);
@@ -245,62 +227,12 @@ export default function ProjectDetailSidebar({
           </div>
         </div>
 
-        {/* Quick details */}
-        <div className="flex flex-col gap-sm">
-          <div className="flex items-center gap-2xs text-text-secondary">
-            <CalendarDays size={16} className="text-text-tertiary shrink-0" />
-            <span className="type-body">
-              Posted {formatPostedDate(project.createdAt)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2xs text-text-secondary">
-            <LocationIcon size={16} className="text-text-tertiary shrink-0" />
-            <span className="type-body">
-              {project.locationDetail.length > 0
-                ? project.locationDetail.length === 1
-                  ? project.locationDetail[0].split(",")[0]
-                  : `${project.locationDetail.length} locations`
-                : LOCATION_LABELS[project.locationType]}
-            </span>
-          </div>
-
-          {project.timeCommitment && (
-            <div className="flex items-center gap-2xs text-text-secondary">
-              <Clock size={16} className="text-text-tertiary shrink-0" />
-              <span className="type-body">{project.timeCommitment}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2xs text-text-secondary">
-            <DollarSign size={16} className="text-text-tertiary shrink-0" />
-            <span className="type-body">
-              {project.compensationAmount &&
-              project.compensationAmount !== "$"
-                ? project.compensationAmount
-                : "Unpaid"}
-            </span>
-          </div>
-
-          {projectTypeLabel && (
-            <div className="flex items-center gap-2xs text-text-secondary">
-              <Crown size={16} className="text-text-tertiary shrink-0" />
-              <span className="type-body">{projectTypeLabel}</span>
-            </div>
-          )}
-
-          {project.locationDetail.length > 0 && (
-            <div className="flex items-start gap-2xs text-text-secondary">
-              <MapPin size={16} className="text-text-tertiary shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-4xs min-w-0">
-                {project.locationDetail.map((addr, i) => (
-                  <span key={i} className="type-body text-text-secondary truncate">
-                    {addr}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Posted date */}
+        <div className="flex items-center gap-2xs text-text-secondary">
+          <CalendarDays size={16} className="text-text-tertiary shrink-0" />
+          <span className="type-body">
+            Posted {formatPostedDate(project.createdAt)}
+          </span>
         </div>
 
         {/* Action buttons */}
@@ -355,16 +287,62 @@ export default function ProjectDetailSidebar({
         onAuthenticated={handleAuthenticated}
       />
 
-      {/* Role selection */}
-      <RoleSelectModal
-        open={roleSelectOpen}
-        onComplete={handleRoleSelected}
-      />
+      {/* Poster needs learner profile popup */}
+      {posterNeedsLearnerOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+            onClick={() => setPosterNeedsLearnerOpen(false)}
+          />
+          <div
+            className="
+              relative z-10 w-full max-w-[440px]
+              bg-background rounded-[var(--radius-lg)]
+              shadow-high border border-border
+              mx-md
+              animate-[modalIn_var(--duration-base)_var(--ease-enter)_forwards]
+            "
+          >
+            <div className="flex items-center justify-between px-lg pt-lg pb-sm">
+              <h2 className="type-title">Create a learner profile</h2>
+              <button
+                onClick={() => setPosterNeedsLearnerOpen(false)}
+                className="p-1 rounded-[var(--radius-sm)] text-text-secondary hover:text-text-primary hover:bg-surface-1 transition-colors duration-[var(--duration-micro)] cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-lg pb-lg">
+              <p className="type-body text-text-secondary mb-md">
+                To apply to projects, you need to set up a learner profile. This
+                lets project owners learn about you and your interests.
+              </p>
+              <div className="flex gap-sm">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="flex-1"
+                  onClick={handlePosterCreateLearner}
+                >
+                  Set up profile
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setPosterNeedsLearnerOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Applicant profile setup */}
+      {/* Learner profile setup */}
       <ApplicantProfileModal
-        open={applicantSetupOpen}
-        onComplete={handleApplicantSetupComplete}
+        open={learnerSetupOpen}
+        onComplete={handleLearnerSetupComplete}
       />
 
       {/* Apply modal */}

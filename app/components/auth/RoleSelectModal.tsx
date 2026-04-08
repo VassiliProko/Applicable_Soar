@@ -78,7 +78,7 @@ export default function RoleSelectModal({
             </div>
             <div>
               <p className="type-body font-medium text-text-primary">
-                I&apos;m here to post projects
+                I want to post projects
               </p>
               <p className="type-caption text-text-secondary mt-3xs">
                 Share opportunities and find people to work with
@@ -88,7 +88,7 @@ export default function RoleSelectModal({
 
           {/* Find Opportunities */}
           <button
-            onClick={() => handleSelect("applicant")}
+            onClick={() => handleSelect("learner")}
             disabled={loading}
             className="
               w-full p-md rounded-[var(--radius-md)]
@@ -106,10 +106,10 @@ export default function RoleSelectModal({
             </div>
             <div>
               <p className="type-body font-medium text-text-primary">
-                I&apos;m looking for opportunities
+                I want to learn and grow
               </p>
               <p className="type-caption text-text-secondary mt-3xs">
-                Browse projects and apply to ones that interest you
+                Find projects, build skills, and grow your track record
               </p>
             </div>
           </button>

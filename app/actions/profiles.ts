@@ -7,6 +7,7 @@ import type { UserRole } from "@/app/lib/types";
 export async function createUserProfile(data: {
   role: UserRole;
   fullName?: string;
+  bio?: string;
   skills?: string[];
   portfolioUrl?: string;
   resumeUrl?: string;
@@ -26,6 +27,7 @@ export async function createUserProfile(data: {
     user_id: user.id,
     role: data.role,
     full_name: data.fullName || null,
+    bio: data.bio || null,
     skills: data.skills ?? [],
     portfolio_url: data.portfolioUrl || null,
     resume_url: data.resumeUrl || null,
@@ -66,6 +68,7 @@ export async function getUserProfile() {
       userId: data.user_id,
       role: data.role as UserRole,
       fullName: data.full_name,
+      bio: data.bio ?? null,
       skills: data.skills ?? [],
       portfolioUrl: data.portfolio_url,
       resumeUrl: data.resume_url,
@@ -76,6 +79,7 @@ export async function getUserProfile() {
 export async function updateUserProfile(data: {
   role?: UserRole;
   fullName?: string;
+  bio?: string;
   skills?: string[];
   portfolioUrl?: string;
   resumeUrl?: string;
@@ -95,6 +99,7 @@ export async function updateUserProfile(data: {
   const update: Record<string, unknown> = {};
   if (data.role !== undefined) update.role = data.role;
   if (data.fullName !== undefined) update.full_name = data.fullName || null;
+  if (data.bio !== undefined) update.bio = data.bio || null;
   if (data.skills !== undefined) update.skills = data.skills;
   if (data.portfolioUrl !== undefined)
     update.portfolio_url = data.portfolioUrl || null;

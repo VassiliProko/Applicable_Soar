@@ -5,12 +5,6 @@ import FilterBar, { type ActiveFilters, type FilterDef } from "./FilterBar";
 import ProjectCard from "./ProjectCard";
 import type { PublicProject } from "./ProjectCard";
 
-/* ------------------------------------------------------------------ */
-/*  Predefined project-type keywords (matched against title/desc)      */
-/* ------------------------------------------------------------------ */
-
-import { PROJECT_TYPE_OPTIONS } from "@/app/lib/types";
-
 const LOCATION_TYPE_OPTIONS = [
   { value: "remote", label: "Remote" },
   { value: "on-site", label: "Onsite" },
@@ -93,7 +87,6 @@ export default function DiscoverContent({ projects }: { projects: PublicProject[
       ...(skills.length > 0
         ? [{ key: "skills", label: "Skills", options: skills }]
         : []),
-      { key: "projectType", label: "Project Type", options: PROJECT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label })) },
       { key: "locationType", label: "Location Type", options: LOCATION_TYPE_OPTIONS },
       { key: "compensation", label: "Compensation", options: COMPENSATION_OPTIONS },
       { key: "posted", label: "Posted", options: TIME_POSTED_OPTIONS },
@@ -112,12 +105,6 @@ export default function DiscoverContent({ projects }: { projects: PublicProject[
       // Skills filter
       const sk = active.skills ?? [];
       if (sk.length > 0 && !sk.some((v) => (p.skills ?? []).includes(v))) {
-        return false;
-      }
-
-      // Project type
-      const pt = active.projectType ?? [];
-      if (pt.length > 0 && !pt.includes(p.projectType)) {
         return false;
       }
 

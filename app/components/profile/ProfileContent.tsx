@@ -169,7 +169,7 @@ export default function ProfileContent() {
 
   const role = profile?.role ?? null;
   const isPoster = role === "poster" || role === "both";
-  const isApplicant = role === "applicant" || role === "both";
+  const isLearner = role === "learner" || role === "both";
 
   return (
     <AuthGate>
@@ -192,7 +192,7 @@ export default function ProfileContent() {
           <ProfileHeader user={user} role={role} />
 
           {/* Applicant sections first (applied projects + details) */}
-          {isApplicant && (
+          {isLearner && (
             <>
               <AppliedProjectsSection
                 applications={applications}
@@ -230,10 +230,10 @@ export default function ProfileContent() {
           <PlanSection />
 
           {/* Role switching prompt */}
-          {profile && role === "applicant" && (
+          {profile && role === "learner" && (
             <div className="rounded-[var(--radius-lg)] border border-dashed border-border p-md text-center">
               <p className="type-body text-text-secondary">
-                Want to post projects?
+                Want to post your own projects?
               </p>
               <button
                 onClick={handleAddPosterRole}
@@ -253,7 +253,7 @@ export default function ProfileContent() {
                 onClick={handleAddApplicantRole}
                 className="type-body text-primary hover:underline mt-2xs cursor-pointer bg-transparent border-none"
               >
-                Set up your applicant profile
+                Set up your learner profile
               </button>
             </div>
           )}

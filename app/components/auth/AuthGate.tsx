@@ -15,8 +15,10 @@ type GatePhase =
   | "auth"
   | "role-select"
   | "org-setup"
-  | "applicant-setup"
+  | "learner-setup"
   | "ready";
+
+// Note: DB stores "learner" for the learner role
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -98,7 +100,8 @@ export default function AuthGate({ children }: AuthGateProps) {
     if (role === "poster") {
       setPhase("org-setup");
     } else {
-      setPhase("applicant-setup");
+      // learner or both
+      setPhase("learner-setup");
     }
   };
 
@@ -157,7 +160,7 @@ export default function AuthGate({ children }: AuthGateProps) {
     );
   }
 
-  if (phase === "applicant-setup") {
+  if (phase === "learner-setup") {
     return (
       <>
         <div className="opacity-30 pointer-events-none select-none blur-[2px]">

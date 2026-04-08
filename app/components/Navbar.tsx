@@ -108,6 +108,7 @@ export default function Navbar() {
     if (role === "poster") {
       setOrgSetupOpen(true);
     } else {
+      // learner
       setApplicantSetupOpen(true);
     }
   };

@@ -13,13 +13,11 @@ import {
   Globe,
   Building2,
   ArrowLeftRight,
-  Crown,
 } from "lucide-react";
 import { Popover } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
 import type { MantineTransition } from "@mantine/core";
 import type { ProjectFormData } from "@/app/lib/types";
-import { PROJECT_TYPE_OPTIONS } from "@/app/lib/types";
 
 /* ── Dropdown transition (drop down from top) ──────── */
 
@@ -287,8 +285,6 @@ export default function CreateProjectForm({
   const [commitmentOpen, setCommitmentOpen] = useState(false);
   const [compEditing, setCompEditing] = useState(false);
   const compInputRef = useRef<HTMLInputElement>(null);
-  const [projectTypeOpen, setProjectTypeOpen] = useState(false);
-
   return (
     <form
       className="flex flex-col gap-md"
@@ -511,55 +507,6 @@ export default function CreateProjectForm({
           </button>
         </div>
       </div>
-
-      {/* Project Type */}
-      <Popover
-        opened={projectTypeOpen}
-        onChange={setProjectTypeOpen}
-        position="bottom-start"
-        shadow="md"
-        width="target"
-        transitionProps={{ transition: dropDown, duration: 150 }}
-      >
-        <Popover.Target>
-          <button
-            type="button"
-            onClick={() => setProjectTypeOpen((o) => !o)}
-            className="w-full flex items-center gap-sm px-[var(--input-px)] h-[48px] rounded-[var(--radius-md)] border border-border bg-background hover:border-border-hover transition-all duration-[var(--duration-micro)] cursor-pointer text-left"
-          >
-            <Crown size={18} className="text-text-tertiary shrink-0" />
-            <span className="type-body text-text-primary shrink-0">Project Type</span>
-            <span className="flex-1" />
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-sm)] hover:bg-surface-1 text-text-secondary hover:text-text-primary transition-all duration-[var(--duration-micro)]">
-              <span className="type-body">
-                {form.projectType
-                  ? PROJECT_TYPE_OPTIONS.find((o) => o.value === form.projectType)?.label ?? form.projectType
-                  : "Select type"}
-              </span>
-              <ChevronDown size={16} className="text-text-tertiary shrink-0" />
-            </span>
-          </button>
-        </Popover.Target>
-        <Popover.Dropdown className="!p-1.5 !bg-surface-3 !border-border">
-          {PROJECT_TYPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                update("projectType", form.projectType === opt.value ? "" : opt.value);
-                setProjectTypeOpen(false);
-              }}
-              className={`w-full flex items-center px-3 py-2 rounded-[var(--radius-sm)] type-body transition-colors duration-[var(--duration-micro)] cursor-pointer ${
-                form.projectType === opt.value
-                  ? "bg-surface-2 text-text-primary font-medium"
-                  : "text-text-secondary hover:bg-surface-2 hover:text-text-primary"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </Popover.Dropdown>
-      </Popover>
 
     </form>
   );

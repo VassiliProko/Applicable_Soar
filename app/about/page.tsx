@@ -62,7 +62,7 @@ export default function AboutPage() {
               the right opportunities are hard to find. SOAR exists to make that
               connection feel lighter, clearer, and more human. Instead of long
               hiring workflows or noisy outreach, SOAR gives project posters a
-              clean page to share and gives applicants a simple way to express
+              clean page to share and gives learners a simple way to express
               interest.
             </p>
           </section>

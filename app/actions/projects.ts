@@ -16,7 +16,6 @@ const projectSchema = z.object({
   time_commitment: z.string().min(1, "Time commitment is required").nullable(),
   compensation_type: z.enum(["paid", "unpaid", "equity"]),
   compensation_amount: z.string().nullable(),
-  project_type: z.string(),
   location_type: z.enum(["remote", "on-site", "hybrid"]),
   location_detail: z.array(z.string()).nullable(),
   skills: z.array(z.string()),
@@ -38,7 +37,6 @@ function toDbRow(data: ProjectFormData) {
     time_commitment: data.timeCommitment || null,
     compensation_type: data.compensationType,
     compensation_amount: data.compensationAmount || null,
-    project_type: data.projectType || "",
     location_type: data.locationType,
     location_detail: data.locationDetail.length > 0 ? data.locationDetail : null,
     skills: data.skills,
@@ -61,7 +59,6 @@ function fromDbRow(row: Record<string, unknown>): ProjectFormData {
     timeCommitment: (row.time_commitment as string) ?? "",
     compensationType: row.compensation_type as ProjectFormData["compensationType"],
     compensationAmount: (row.compensation_amount as string) ?? "",
-    projectType: (row.project_type as string) ?? "",
     locationType: row.location_type as ProjectFormData["locationType"],
     locationDetail: (row.location_detail as string[] | null) ?? [],
     skills: (row.skills as string[]) ?? [],
@@ -137,7 +134,6 @@ export async function updateProject(id: string, data: Partial<ProjectFormData>) 
   if (data.timeCommitment !== undefined) updates.time_commitment = data.timeCommitment || null;
   if (data.compensationType !== undefined) updates.compensation_type = data.compensationType;
   if (data.compensationAmount !== undefined) updates.compensation_amount = data.compensationAmount || null;
-  if (data.projectType !== undefined) updates.project_type = data.projectType || "";
   if (data.locationType !== undefined) updates.location_type = data.locationType;
   if (data.locationDetail !== undefined) updates.location_detail = data.locationDetail.length > 0 ? data.locationDetail : null;
   if (data.skills !== undefined) updates.skills = data.skills;

@@ -17,6 +17,7 @@ export default function ApplicantProfileModal({
   onComplete,
 }: ApplicantProfileModalProps) {
   const [fullName, setFullName] = useState("");
+  const [bio, setBio] = useState("");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [portfolioUrl, setPortfolioUrl] = useState("");
@@ -62,6 +63,11 @@ export default function ApplicantProfileModal({
       return;
     }
 
+    if (!bio.trim()) {
+      setError("A short description is required");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -99,6 +105,7 @@ export default function ApplicantProfileModal({
 
     const result = await updateUserProfile({
       fullName: fullName.trim(),
+      bio: bio.trim(),
       skills,
       portfolioUrl: portfolioUrl.trim() || undefined,
       resumeUrl,
@@ -132,7 +139,7 @@ export default function ApplicantProfileModal({
       >
         {/* Header */}
         <div className="px-lg pt-lg pb-sm">
-          <h2 className="type-title">Set up your profile</h2>
+          <h2 className="type-title">Set up your learner profile</h2>
           <p className="type-body text-text-secondary mt-3xs">
             Tell us about yourself so project owners can learn more about you.
           </p>
@@ -152,6 +159,36 @@ export default function ApplicantProfileModal({
               }}
               maxLength={100}
             />
+
+            {/* Bio */}
+            <div className="flex flex-col gap-[var(--space-3xs)]">
+              <label className="type-caption font-medium text-text-secondary">
+                About you
+              </label>
+              <textarea
+                placeholder="A short description about yourself, what you're interested in, and what you're looking to learn..."
+                value={bio}
+                onChange={(e) => {
+                  setBio(e.target.value);
+                  setError("");
+                }}
+                maxLength={300}
+                rows={3}
+                className="
+                  px-[var(--input-px)] py-2xs
+                  rounded-[var(--radius-sm)]
+                  border border-border bg-background text-text-primary type-body
+                  transition-all duration-[var(--duration-micro)]
+                  placeholder:text-text-tertiary
+                  focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--primary-focus-ring)]
+                  hover:border-border-hover
+                  resize-none
+                "
+              />
+              <span className="type-caption text-text-tertiary text-right">
+                {bio.length}/300
+              </span>
+            </div>
 
             {/* Skills */}
             <div className="flex flex-col gap-[var(--space-3xs)]">

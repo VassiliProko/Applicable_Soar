@@ -1,12 +1,13 @@
 // ── User Profiles & Roles ──────────────────────────────────
 
-export type UserRole = "poster" | "applicant" | "both";
+export type UserRole = "poster" | "learner" | "both";
 
 export interface UserProfile {
   id: string;
   userId: string;
   role: UserRole;
   fullName: string | null;
+  bio: string | null;
   skills: string[];
   portfolioUrl: string | null;
   resumeUrl: string | null;
@@ -94,7 +95,6 @@ export interface ProjectFormData {
   timeCommitment: string;
   compensationType: "paid" | "unpaid" | "equity";
   compensationAmount: string;
-  projectType: string;
   locationType: "remote" | "on-site" | "hybrid";
   locationDetail: string[];
   skills: string[];
@@ -120,16 +120,6 @@ export interface ProjectWithMeta extends ProjectFormData {
   attachments: ProjectAttachment[];
 }
 
-export const PROJECT_TYPE_OPTIONS = [
-  { value: "internship", label: "Internship" },
-  { value: "research", label: "Research" },
-  { value: "volunteer", label: "Volunteer" },
-  { value: "freelance", label: "Freelance" },
-  { value: "fellowship", label: "Fellowship" },
-  { value: "contract", label: "Contract" },
-  { value: "open-source", label: "Open Source" },
-] as const;
-
 export const BANNER_COLORS = [
   "#1B2838",
   "#2D4A3E",
@@ -152,7 +142,6 @@ export const INITIAL_PROJECT: ProjectFormData = {
   timeCommitment: "",
   compensationType: "paid",
   compensationAmount: "",
-  projectType: "",
   locationType: "remote",
   locationDetail: [],
   skills: [],

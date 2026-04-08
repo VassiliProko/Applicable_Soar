@@ -33,10 +33,6 @@ create table public.projects (
                       check (compensation_type in ('paid', 'unpaid', 'equity')),
   compensation_amount text,
 
-  -- Project type
-  project_type  text not null default ''
-                check (project_type in ('', 'internship', 'research', 'volunteer', 'freelance', 'fellowship', 'contract', 'open-source')),
-
   -- Location
   location_type   text not null default 'remote'
                   check (location_type in ('remote', 'on-site', 'hybrid')),
@@ -242,11 +238,12 @@ create table public.user_profiles (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null unique references auth.users(id) on delete cascade,
 
-  role          text not null default 'applicant'
-                check (role in ('poster', 'applicant', 'both')),
+  role          text not null default 'learner'
+                check (role in ('poster', 'learner', 'both')),
 
-  -- Applicant fields (nullable — only used when role includes applicant)
+  -- Learner fields (nullable — only used when role includes learner)
   full_name     text,
+  bio           text,
   skills        text[] not null default '{}',
   portfolio_url text,
   resume_url    text,
@@ -404,6 +401,6 @@ create policy "Project owners can read applicant resumes"
 -- ============================================================
 -- Create user_profiles for existing organization owners
 insert into public.user_profiles (user_id, role)
-select user_id, 'poster'
+select user_id, 'poster'::text
 from public.organizations
 on conflict (user_id) do nothing;
